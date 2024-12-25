@@ -15,10 +15,25 @@ NEXT:
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
+import os
 
 def openDirectory(variable, dirText="Select the folder where your files are located"):
     dirName = filedialog.askdirectory(parent=root, title=dirText)
     variable.set(str(dirName))
+
+def findMissing(extension, local_loc, server_loc):
+    # Need to create a new non-root window to display missing files (and option
+    # to save the list)
+    local_files = [file for file in os.listdir(local_loc) if file.endswith(extension)]
+    server_files = [file for file in os.listdir(server_loc) if file.endswith(extension)]
+    missing_file = [file for file in local_files if file not in server_files]
+
+def findOverlap(extension, local_loc, server_loc):
+    # Need to create a new non-root window to display overlap files (and option
+    # to save, move, or delete the files)
+    local_files = [file for file in os.listdir(local_loc) if file.endswith(extension)]
+    server_files = [file for file in os.listdir(server_loc) if file.endswith(extension)]
+    overlap_files = [file for file in local_files if file in server_files]
 
 root = tk.Tk()
 root.title("File Verification")
