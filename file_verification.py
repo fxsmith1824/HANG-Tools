@@ -7,9 +7,6 @@ files.
 
 NEXT:
     - Add buttons / functions for missing, overlapping files (see schematic)
-    - Need to correct for fact that BDF files are all stored in one folder
-    but this will find ALL BDF files even if only comparing to one experiment's
-    folder on the server...
 
 @author: Francis
 """
@@ -23,11 +20,11 @@ def openDirectory(variable, dirText="Select the folder where your files are loca
     dirName = filedialog.askdirectory(parent=root, title=dirText)
     variable.set(str(dirName))
 
-def findMissing(extension, local_loc, server_loc):
+def findMissing(extension, exp, local_loc, server_loc):
     # Need to create a new non-root window to display missing files (and option
     # to save the list)
-    local_files = [file for file in os.listdir(local_loc) if file.endswith(extension)]
-    server_files = [file for file in os.listdir(server_loc) if file.endswith(extension)]
+    local_files = [file for path, subdirs, files in os.walk(local_loc) for file in files if file.endswith(extension) and exp in file]
+    server_files = [file for path, subdirs, files in os.walk(server_loc) for file in files if file.endswith(extension) and exp in file]
     missing_file = [file for file in local_files if file not in server_files]
     
     missing = tk.Toplevel(root)
@@ -43,11 +40,11 @@ def findMissing(extension, local_loc, server_loc):
     
     missing.mainloop()
 
-def findOverlap(extension, local_loc, server_loc):
+def findOverlap(extension, exp, local_loc, server_loc):
     # Need to create a new non-root window to display overlap files (and option
     # to save, move, or delete the files)
-    local_files = [file for file in os.listdir(local_loc) if file.endswith(extension)]
-    server_files = [file for file in os.listdir(server_loc) if file.endswith(extension)]
+    local_files = [file for path, subdirs, files in os.walk(local_loc) for file in files if file.endswith(extension) and exp in file]
+    server_files = [file for path, subdirs, files in os.walk(server_loc) for file in files if file.endswith(extension) and exp in file]
     overlap_files = [file for file in local_files if file in server_files]
     
     overlap = tk.Toplevel(root)
@@ -66,26 +63,29 @@ def findOverlap(extension, local_loc, server_loc):
 
 root = tk.Tk()
 root.title("File Verification")
-tk.Label(root, text="File extension:", anchor="e", justify="right").grid(sticky="e", row=1, column=0, padx=5, pady=5)
-tk.Label(root, text="Location of local files:", anchor="e", justify="right").grid(sticky="e", row=2, column=0, padx=5, pady=5)
-tk.Label(root, text="Location of server files:", anchor="e", justify="right").grid(sticky="e", row=3, column=0, padx=5, pady=5)
+e1_label = tk.Label(root, text="File extension:", anchor="e", justify="right").grid(sticky="e", row=1, column=0, padx=5, pady=5)
+e2_label = tk.Label(root, text="Experiment Tag:", anchor="e", justify="right").grid(sticky="e", row=2, column=0, padx=5, pady=5)
+e3_label = tk.Label(root, text="Location of local files:", anchor="e", justify="right").grid(sticky="e", row=3, column=0, padx=5, pady=5)
+e4_label = tk.Label(root, text="Location of server files:", anchor="e", justify="right").grid(sticky="e", row=4, column=0, padx=5, pady=5)
 # Row 4 or 5 for buttons
 
 e1default = tk.StringVar()
 e2default = tk.StringVar()
 e3default = tk.StringVar()
+e4default = tk.StringVar()
 
 e1 = ttk.Combobox(root, textvariable=e1default, state='readonly', values=[".bdf", ".mat"], width=100).grid(row=1, column=1, columnspan=3)
 e2 = tk.Entry(root, text=e2default, width=100, justify="left").grid(sticky="w", row=2, column=1, columnspan=3)
 e3 = tk.Entry(root, text=e3default, width=100, justify="left").grid(sticky="w", row=3, column=1, columnspan=3)
+e4 = tk.Entry(root, text=e4default, width=100, justify="left").grid(sticky="w", row=4, column=1, columnspan=3)
 
-e2_button = tk.Button(root, text="Choose Folder", command=lambda:openDirectory(e2default)).grid(row=2, column=4, padx=5)
 e3_button = tk.Button(root, text="Choose Folder", command=lambda:openDirectory(e3default)).grid(row=3, column=4, padx=5)
+e4_button = tk.Button(root, text="Choose Folder", command=lambda:openDirectory(e4default)).grid(row=4, column=4, padx=5)
 
-missing = tk.Button(root, text="Missing Files", command=lambda:findMissing(e1default.get(),e2default.get(),e3default.get()), width=20)
-missing.grid(row=4, column=1, columnspan=1, pady=4)
-overlap = tk.Button(root, text="Overlapping Files", command=lambda:findOverlap(e1default.get(),e2default.get(),e3default.get()), width=20)
-overlap.grid(row=4, column=2, columnspan=1, pady=4)
-tk.Button(root, text="Close", command=root.destroy, width=20).grid(row=4, column=3, columnspan=1, pady=4)
+missing = tk.Button(root, text="Missing Files", command=lambda:findMissing(e1default.get(),e2default.get(),e3default.get(),e4default.get()), width=20)
+missing.grid(row=5, column=1, columnspan=1, pady=4)
+overlap = tk.Button(root, text="Overlapping Files", command=lambda:findOverlap(e1default.get(),e2default.get(),e3default.get(),e4default.get()), width=20)
+overlap.grid(row=5, column=2, columnspan=1, pady=4)
+tk.Button(root, text="Close", command=root.destroy, width=20).grid(row=5, column=3, columnspan=1, pady=4)
 
 root.mainloop()
