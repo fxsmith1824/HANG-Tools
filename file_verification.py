@@ -7,6 +7,7 @@ files.
 
 NEXT:
     - Add buttons / functions for missing, overlapping files (see schematic)
+    to basically save a list or potentially move/delete local files?
 
 @author: Francis
 """
@@ -20,29 +21,43 @@ def openDirectory(variable, dirText="Select the folder where your files are loca
     dirName = filedialog.askdirectory(parent=root, title=dirText)
     variable.set(str(dirName))
 
+def saveItems(items, file_name):
+    with open(file_name, 'w') as f:
+        for item in items:
+            f.write(f"{item}\n")
+
 def findMissing(extension, exp, local_loc, server_loc):
-    # Need to create a new non-root window to display missing files (and option
-    # to save the list)
+    if len(exp) > 0:
+        file_name = exp + '_' + extension.strip('.') + '_MissingFiles.txt'
+    else:
+        file_name = 'NoExpTag_' + extension.strip('.') + '_MissingFiles.txt'
     local_files = [file for path, subdirs, files in os.walk(local_loc) for file in files if file.endswith(extension) and exp in file]
     server_files = [file for path, subdirs, files in os.walk(server_loc) for file in files if file.endswith(extension) and exp in file]
-    missing_file = [file for file in local_files if file not in server_files]
+    missing_files = [file for file in local_files if file not in server_files]
     
     missing = tk.Toplevel(root)
     missing.title("Files Missing on Server")
     miss_list = tk.Text(missing, width=50)
     miss_list.grid(row=0, column=0, columnspan=3, padx=5, pady=5)
-    if len(missing_file) > 0:
-        for item in missing_file:
+    if len(missing_files) > 0:
+        for item in missing_files:
             miss_list.insert(tk.END, item+"\n")
     else:
         miss_list.insert(tk.END, "No local files missing from server")
-    miss_close = tk.Button(missing, text="Close", command=missing.destroy, width=10).grid(row=1, column=2, pady=4)
+    miss_save = tk.Button(missing, text="Save as Text", command=lambda:saveItems(missing_files, file_name))
+    miss_save.grid(row=1, column=0, pady=4)
+    miss_close = tk.Button(missing, text="Close", command=missing.destroy, width=10)
+    miss_close.grid(row=1, column=2, pady=4)
     
     missing.mainloop()
 
 def findOverlap(extension, exp, local_loc, server_loc):
     # Need to create a new non-root window to display overlap files (and option
     # to save, move, or delete the files)
+    if len(exp) > 0:
+        file_name = exp + '_' + extension.strip('.') + '_OverlapFiles.txt'
+    else:
+        file_name = 'NoExpTag_' + extension.strip('.') + '_OverlapFiles.txt'
     local_files = [file for path, subdirs, files in os.walk(local_loc) for file in files if file.endswith(extension) and exp in file]
     server_files = [file for path, subdirs, files in os.walk(server_loc) for file in files if file.endswith(extension) and exp in file]
     overlap_files = [file for file in local_files if file in server_files]
@@ -56,7 +71,10 @@ def findOverlap(extension, exp, local_loc, server_loc):
             over_list.insert(tk.END, item+"\n")
     else:
         over_list.insert(tk.END, "No overlapping files between local and server")
-    over_close = tk.Button(overlap, text="Close", command=overlap.destroy, width=10).grid(row=1, column=2, pady=4)
+    over_save = tk.Button(overlap, text="Save as Text", command=lambda:saveItems(overlap_files, file_name))
+    over_save.grid(row=1, column=0, pady=4)
+    over_close = tk.Button(overlap, text="Close", command=overlap.destroy, width=10)
+    over_close.grid(row=1, column=2, pady=4)
     
     overlap.mainloop()
     # return overlap_files
